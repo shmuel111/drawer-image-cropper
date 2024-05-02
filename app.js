@@ -29,16 +29,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function markCorners() {
-        // Logic to allow user to mark corners on the canvas
-        // For simplicity, let's draw four circles at hardcoded positions
-        corners = [
-            { x: 100, y: 100 },
-            { x: 300, y: 100 },
-            { x: 300, y: 300 },
-            { x: 100, y: 300 }
-        ];
+        // Clear previous corners
+        corners = [];
 
-        drawCorners();
+        // Add four corners based on mouse click positions
+        canvas.addEventListener('click', addCorner);
+
+        function addCorner(event) {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            corners.push({ x, y });
+
+            if (corners.length === 4) {
+                canvas.removeEventListener('click', addCorner); // Stop listening for clicks
+                drawCorners();
+            }
+        }
     }
 
     function drawCorners() {
