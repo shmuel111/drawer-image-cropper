@@ -134,9 +134,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Draw the cropped image onto the new canvas
         croppedCtx.drawImage(img, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
 
-        // Display the cropped image on the main canvas
-        canvas.width = cropWidth;
-        canvas.height = cropHeight;
-        ctx.drawImage(croppedCanvas, 0, 0);
+        // Clear main canvas and draw cropped image centered
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const offsetX = (canvasWidth - cropWidth) / 2;
+        const offsetY = (canvasHeight - cropHeight) / 2;
+        ctx.drawImage(croppedCanvas, offsetX, offsetY);
     }
 });
