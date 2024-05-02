@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let width = 0;
     let height = 0;
     let img; // Declare img globally
+    let drag = false; // Flag to track dragging
 
     imageInput.addEventListener('change', handleImageUpload);
     document.getElementById('markCornersBtn').addEventListener('click', markCorners);
@@ -33,18 +34,30 @@ document.addEventListener('DOMContentLoaded', () => {
         corners = [];
 
         // Add four corners based on mouse click positions
-        canvas.addEventListener('click', addCorner);
+        canvas.addEventListener('mousedown', startDrag);
+        canvas.addEventListener('mousemove', dragCorner);
+        canvas.addEventListener('mouseup', endDrag);
 
-        function addCorner(event) {
+        function startDrag(event) {
+            drag = true;
             const rect = canvas.getBoundingClientRect();
             const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
             corners.push({ x, y });
+        }
 
-            if (corners.length === 4) {
-                canvas.removeEventListener('click', addCorner); // Stop listening for clicks
+        function dragCorner(event) {
+            if (drag) {
+                const rect = canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                corners[corners.length - 1] = { x, y };
                 drawCorners();
             }
+        }
+
+        function endDrag() {
+            drag = false;
         }
     }
 
@@ -61,6 +74,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function cropImage() {
-        // Crop image logic
+        if (corners.length !== 4) {
+            alert('Please mark all four corners before cropping.');
+            return;
+        }
+
+        // Calculate the crop area based on the marked corners
+        const minX = Math.min(...corners.map(corner => corner.x));
+        const minY = Math.min(...corners.map(corner => corner.y));
+        const maxX = Math.max(...corners.map(corner => corner.x));
+        const maxY = Math.max(...corners.map(corner => corner.y));
+        const cropWidth = maxX - minX;
+        const cropHeight = maxY - minY;
+
+        // Create a new canvas to hold the cropped image
+        const croppedCanvas = document.createElement('canvas');
+        const croppedCtx = croppedCanvas.getContext('2d');
+        croppedCanvas.width = cropWidth;
+        croppedCanvas.height = cropHeight;
+
+        // Draw the cropped image onto the new canvas
+        croppedCtx.drawImage(img, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+
+        // Display the cropped image on the main canvas
+        canvas.width = cropWidth;
+        canvas.height = cropHeight;
+        ctx.drawImage(croppedCanvas, 0, 0);
     }
 });
+ 
