@@ -24,32 +24,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 canvas.width = img.width;
                 canvas.height = img.height;
                 ctx.drawImage(img, 0, 0);
+                markInitialCorners();
             };
             img.src = e.target.result;
         };
         reader.readAsDataURL(file);
     }
 
-    function markCorners() {
-        // Clear previous corners
-        corners = [];
+    function markInitialCorners() {
+        const rect = canvas.getBoundingClientRect();
+        const width = canvas.width;
+        const height = canvas.height;
 
-        canvas.addEventListener('mousedown', startDragging);
-        canvas.addEventListener('mousemove', dragCorner);
-        canvas.addEventListener('mouseup', stopDragging);
-        canvas.addEventListener('mouseleave', stopDragging);
+        corners = [
+            { x: rect.left, y: rect.top },
+            { x: rect.left + width, y: rect.top },
+            { x: rect.left + width, y: rect.top + height },
+            { x: rect.left, y: rect.top + height }
+        ];
 
         drawCorners();
     }
 
+    function markCorners() {
+        canvas.addEventListener('mousedown', startDragging);
+        canvas.addEventListener('mousemove', dragCorner);
+        canvas.addEventListener('mouseup', stopDragging);
+        canvas.addEventListener('mouseleave', stopDragging);
+    }
+
     function startDragging(event) {
-        isDragging = true;
         const rect = canvas.getBoundingClientRect();
         offsetX = event.clientX - rect.left;
         offsetY = event.clientY - rect.top;
 
-        corners.push({ x: offsetX, y: offsetY });
-        dragIndex = corners.length - 1;
+        corners.forEach((corner, index) => {
+            if (offsetX >= corner.x - 5 && offsetX <= corner.x + 5 &&
+                offsetY >= corner.y - 5 && offsetY <= corner.y + 5) {
+                isDragging = true;
+                dragIndex = index;
+            }
+        });
     }
 
     function dragCorner(event) {
@@ -71,6 +86,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function drawCorners() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0);
+
+        ctx.strokeStyle = 'red';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(corners[0].x, corners[0].y);
+        corners.forEach(corner => {
+            ctx.lineTo(corner.x, corner.y);
+        });
+        ctx.closePath();
+        ctx.stroke();
 
         ctx.fillStyle = 'red';
         corners.forEach(corner => {
