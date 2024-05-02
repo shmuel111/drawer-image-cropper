@@ -3,10 +3,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     let corners = [];
-    let width = 0;
-    let height = 0;
     let img; // Declare img globally
-    let drag = false; // Flag to track dragging
+    let isDragging = false;
+    let dragIndex = -1;
+    let offsetX = 0;
+    let offsetY = 0;
 
     imageInput.addEventListener('change', handleImageUpload);
     document.getElementById('markCornersBtn').addEventListener('click', markCorners);
@@ -33,32 +34,38 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear previous corners
         corners = [];
 
-        // Add four corners based on mouse click positions
-        canvas.addEventListener('mousedown', startDrag);
+        canvas.addEventListener('mousedown', startDragging);
         canvas.addEventListener('mousemove', dragCorner);
-        canvas.addEventListener('mouseup', endDrag);
+        canvas.addEventListener('mouseup', stopDragging);
+        canvas.addEventListener('mouseleave', stopDragging);
 
-        function startDrag(event) {
-            drag = true;
+        drawCorners();
+    }
+
+    function startDragging(event) {
+        isDragging = true;
+        const rect = canvas.getBoundingClientRect();
+        offsetX = event.clientX - rect.left;
+        offsetY = event.clientY - rect.top;
+
+        corners.push({ x: offsetX, y: offsetY });
+        dragIndex = corners.length - 1;
+    }
+
+    function dragCorner(event) {
+        if (isDragging && dragIndex >= 0) {
             const rect = canvas.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-            corners.push({ x, y });
+            corners[dragIndex] = {
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top
+            };
+            drawCorners();
         }
+    }
 
-        function dragCorner(event) {
-            if (drag) {
-                const rect = canvas.getBoundingClientRect();
-                const x = event.clientX - rect.left;
-                const y = event.clientY - rect.top;
-                corners[corners.length - 1] = { x, y };
-                drawCorners();
-            }
-        }
-
-        function endDrag() {
-            drag = false;
-        }
+    function stopDragging() {
+        isDragging = false;
+        dragIndex = -1;
     }
 
     function drawCorners() {
@@ -79,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Calculate the crop area based on the marked corners
+        // Calculate crop area based on marked corners
         const minX = Math.min(...corners.map(corner => corner.x));
         const minY = Math.min(...corners.map(corner => corner.y));
         const maxX = Math.max(...corners.map(corner => corner.x));
@@ -102,4 +109,3 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.drawImage(croppedCanvas, 0, 0);
     }
 });
- 
