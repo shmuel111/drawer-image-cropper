@@ -15,8 +15,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let offsetX = 0;
     let offsetY = 0;
 
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+
     imageInput.addEventListener('change', handleImageUpload);
-    document.getElementById('markCornersBtn').addEventListener('click', markCorners);
+    canvas.addEventListener('mousedown', startDragging);
+    canvas.addEventListener('mousemove', dragCorner);
+    canvas.addEventListener('mouseup', stopDragging);
+    canvas.addEventListener('mouseleave', stopDragging);
     document.getElementById('cropBtn').addEventListener('click', cropImage);
 
     function handleImageUpload(event) {
@@ -51,13 +57,6 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
 
         drawCorners();
-    }
-
-    function markCorners() {
-        canvas.addEventListener('mousedown', startDragging);
-        canvas.addEventListener('mousemove', dragCorner);
-        canvas.addEventListener('mouseup', stopDragging);
-        canvas.addEventListener('mouseleave', stopDragging);
     }
 
     function startDragging(event) {
