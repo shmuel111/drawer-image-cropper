@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const ctx = canvas.getContext('2d');
     let corners = [];
     let img; // Declare img globally
-    let isDragging = false;
     let dragIndex = -1;
     let offsetX = 0;
     let offsetY = 0;
@@ -24,48 +23,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 canvas.width = img.width;
                 canvas.height = img.height;
                 ctx.drawImage(img, 0, 0);
+                markInitialCorners();
             };
             img.src = e.target.result;
         };
         reader.readAsDataURL(file);
     }
 
-    function markCorners() {
-        // Clear previous corners
-        corners = [];
-
-        canvas.addEventListener('mousedown', startDragging);
-        canvas.addEventListener('mousemove', dragCorner);
-        canvas.addEventListener('mouseup', stopDragging);
-        canvas.addEventListener('mouseleave', stopDragging);
-
+    function markInitialCorners() {
+        corners = [
+            { x: 100, y: 100 },
+            { x: img.width - 100, y: 100 },
+            { x: img.width - 100, y: img.height - 100 },
+            { x: 100, y: img.height - 100 }
+        ];
         drawCorners();
-    }
-
-    function startDragging(event) {
-        isDragging = true;
-        const rect = canvas.getBoundingClientRect();
-        offsetX = event.clientX - rect.left;
-        offsetY = event.clientY - rect.top;
-
-        corners.push({ x: offsetX, y: offsetY });
-        dragIndex = corners.length - 1;
-    }
-
-    function dragCorner(event) {
-        if (isDragging && dragIndex >= 0) {
-            const rect = canvas.getBoundingClientRect();
-            corners[dragIndex] = {
-                x: event.clientX - rect.left,
-                y: event.clientY - rect.top
-            };
-            drawCorners();
-        }
-    }
-
-    function stopDragging() {
-        isDragging = false;
-        dragIndex = -1;
     }
 
     function drawCorners() {
@@ -78,6 +50,39 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.arc(corner.x, corner.y, 5, 0, Math.PI * 2);
             ctx.fill();
         });
+    }
+
+    function detectCorners(event) {
+        const rect = canvas.getBoundingClientRect();
+        offsetX = event.clientX - rect.left;
+        offsetY = event.clientY - rect.top;
+        dragIndex = -1;
+        corners.forEach((corner, index) => {
+            if (Math.abs(corner.x - offsetX) < 10 && Math.abs(corner.y - offsetY) < 10) {
+                dragIndex = index;
+            }
+        });
+    }
+
+    function startDragging(event) {
+        detectCorners(event);
+        if (dragIndex >= 0) {
+            canvas.addEventListener('mousemove', dragCorner);
+            canvas.addEventListener('mouseup', stopDragging);
+        }
+    }
+
+    function dragCorner(event) {
+        const rect = canvas.getBoundingClientRect();
+        corners[dragIndex] = {
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top
+        };
+        drawCorners();
+    }
+
+    function stopDragging() {
+        canvas.removeEventListener('mousemove', dragCorner);
     }
 
     function cropImage() {
@@ -108,4 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
         canvas.height = cropHeight;
         ctx.drawImage(croppedCanvas, 0, 0);
     }
+
+    canvas.addEventListener('mousedown', startDragging);
 });
