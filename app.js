@@ -2,6 +2,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const imageInput = document.getElementById('imageInput');
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
+    const canvasWidth = 960;
+    const canvasHeight = 600;
+    const rectangleWidth = 860;
+    const rectangleHeight = 500;
+    const rectangleX = (canvasWidth - rectangleWidth) / 2;
+    const rectangleY = (canvasHeight - rectangleHeight) / 2;
     let corners = [];
     let img; // Declare img globally
     let isDragging = false;
@@ -21,26 +27,27 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.onload = function(e) {
             img = new Image();
             img.onload = function() {
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-                markInitialCorners();
+                const scaleFactor = Math.min(canvasWidth / img.width, canvasHeight / img.height);
+                const scaledWidth = img.width * scaleFactor;
+                const scaledHeight = img.height * scaleFactor;
+                const offsetX = (canvasWidth - scaledWidth) / 2;
+                const offsetY = (canvasHeight - scaledHeight) / 2;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
+                markInitialRectangle();
             };
             img.src = e.target.result;
         };
         reader.readAsDataURL(file);
     }
 
-    function markInitialCorners() {
-        const rect = canvas.getBoundingClientRect();
-        const width = canvas.width;
-        const height = canvas.height;
-
+    function markInitialRectangle() {
         corners = [
-            { x: rect.left, y: rect.top },
-            { x: rect.left + width, y: rect.top },
-            { x: rect.left + width, y: rect.top + height },
-            { x: rect.left, y: rect.top + height }
+            { x: rectangleX, y: rectangleY },
+            { x: rectangleX + rectangleWidth, y: rectangleY },
+            { x: rectangleX + rectangleWidth, y: rectangleY + rectangleHeight },
+            { x: rectangleX, y: rectangleY + rectangleHeight }
         ];
 
         drawCorners();
@@ -85,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function drawCorners() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
+        ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
 
         ctx.strokeStyle = 'red';
         ctx.lineWidth = 2;
