@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drawer Image Cropper</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        canvas {
+            border: 1px solid #ccc;
+            margin: 10px 0;
+        }
+
+        input, button {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <input type="file" id="imageInput">
+    <canvas id="canvas"></canvas>
+    <button id="markCornersBtn">Mark Corners</button>
+    <label for="widthInput">Width:</label>
+    <input type="number" id="widthInput">
+    <label for="heightInput">Height:</label>
+    <input type="number" id="heightInput">
+    <button id="cropBtn">Crop Image</button>
+    <script src="https://docs.opencv.org/4.5.5/opencv.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
