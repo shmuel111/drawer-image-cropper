@@ -10,22 +10,22 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('markCornersBtn').addEventListener('click', markCorners);
     document.getElementById('cropBtn').addEventListener('click', cropImage);
 
-    function handleImageUpload(event) {
-        const file = event.target.files[0];
-        const reader = new FileReader();
+ function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
 
-        reader.onload = function(e) {
-            const img = new Image();
-            img.onload = function() {
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-            };
-            img.src = e.target.result;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
         };
-
-        reader.readAsDataURL(file);
-    }
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
 
     function markCorners() {
         // Logic to allow user to mark corners on the canvas
