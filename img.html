@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Advanced Image Manipulation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/4.6.0/fabric.min.js"></script>
+    <style>
+        canvas { border: 1px solid #ccc; }
+        #mainCanvas { margin-top: 10px; }
+        .canvas-container { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <input type="file" id="fileInput">
+    <button id="cropButton">Crop</button>
+    <div>Temporary Canvas:</div>
+    <canvas id="tempCanvas" width="500" height="200"></canvas>
+    <div>Main Canvas:</div>
+    <canvas id="mainCanvas" width="500" height="500"></canvas>
+
+    <script>
+        let tempCanvas = new fabric.Canvas('tempCanvas', { selection: false });
+        let mainCanvas = new fabric.Canvas('mainCanvas', { selection: false });
+        let rect, isDown, origX, origY;
+        let fileInput = document.getElementById('fileInput');
+        let imageLoaded;
+
+        fileInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (f) {
+                    fabric.Image.fromURL(f.target.result, function (img) {
+                        if (imageLoaded) {
+                            tempCanvas.remove(imageLoaded);
+                        }
+                        img.set({
+                            left: 10,
+                            top: 10,
+                            hasControls: false,
+                            lockMovementX: true,
+                            lockMovementY: true,
+                            selectable: false
+                        });
+                        img.scaleToWidth(tempCanvas.width - 20);
+                        tempCanvas.add(img);
+                        tempCanvas.renderAll();
+                        imageLoaded = img;
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Initialize rectangle for cropping
+        tempCanvas.on('mouse:down', function (o) {
+            isDown = true;
+            const pointer = tempCanvas.getPointer(o.e);
+            origX = pointer.x;
+            origY = pointer.y;
+            rect = new fabric.Rect({
+                left: origX,
+                top: origY,
+                originX: 'left',
+                originY: 'top',
+                width: pointer.x-origX,
+                height: pointer.y-origY,
+                angle: 0,
+                fill: 'rgba(255,0,0,0.5)',
+                transparentCorners: false
+            });
+            tempCanvas.add(rect);
+        });
+
+        tempCanvas.on('mouse:move', function (o) {
+            if (!isDown) return;
+            const pointer = tempCanvas.getPointer(o.e);
+            if(origX > pointer.x){
+                rect.set({ left: Math.abs(pointer.x) });
+            }
+            if(origY > pointer.y){
+                rect.set({ top: Math.abs(pointer.y) });
+            }
+            rect.set({ width: Math.abs(origX - pointer.x) });
+            rect.set({ height: Math.abs(origY - pointer.y) });
+            tempCanvas.renderAll();
+        });
+
+        tempCanvas.on('mouse:up', function (o) {
+            isDown = false;
+        });
+
+        document.getElementById('cropButton').addEventListener('click', function () {
+            if (rect) {
+                // crop the image with coordinates of the rectangle
+                imageLoaded.cloneAsImage(function (clonedImg) {
+                    const cropped = new fabric.Image(clonedImg.getElement(), {
+                        left: 0,
+                        top: 0,
+                        scaleX: imageLoaded.scaleX,
+                        scaleY: imageLoaded.scaleY
+                    });
+
+                    // calculate the correct cropping area
+                    const cropX = rect.left - imageLoaded.left;
+                    const cropY = rect.top - imageLoaded.top;
+                    const width = rect.width;
+                    const height = rect.height;
+
+                    cropped.set({
+                        clipPath: new fabric.Rect({
+                            originX: 'left', originY: 'top',
+                            left: cropX / cropped.scaleX,
+                            top: cropY / cropped.scaleY,
+                            width: width / cropped.scaleX,
+                            height: height / cropped.scaleY
+                        })
+                    });
+
+                    cropped.scaleToWidth(width);
+                    mainCanvas.add(cropped);
+                    mainCanvas.renderAll();
+
+                    tempCanvas.remove(rect);  // remove rectangle after cropping
+                });
+            }
+        });
+
+        // Moving items back to tempCanvas or arranging in mainCanvas
+        mainCanvas.on('object:moved', function (e) {
+            const object = e.target;
+            // Example condition, customize it based on your need
+            if (object.top < 0 || object.left < 0 || object.top > mainCanvas.height || object.left > mainCanvas.width) {
+                mainCanvas.remove(object);
+                tempCanvas.add(object);
+                tempCanvas.renderAll();
+            }
+            mainCanvas.renderAll();
+        });
+
+    </script>
+</body>
+</html>
