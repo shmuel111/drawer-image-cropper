@@ -1,37 +1,210 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drawer Image Cropper</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
+    <title>Fabric.js Canvas Example</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    
+    
+       <style>
+        #container {
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            align-items: flex-start; /* Aligns canvases at the top */
         }
-
         canvas {
-            border: 1px solid #ccc;
-            margin: 10px 0;
+            
         }
-
-        input, button {
-            margin: 5px;
+        #rightCanvas {
+            padding-left: 40px;
+          
+            
+        }
+          #topCanvas {
+            border: 20px solid grey; /* Adds a grey border with 20px thickness */
+           
         }
     </style>
+    
+    
+    
+   
+  
 </head>
 <body>
-    <input type="file" id="imageInput">
-    <canvas id="canvas"></canvas>
-    <button id="markCornersBtn">Mark Corners</button>
-    <label for="widthInput">Width:</label>
-    <input type="number" id="widthInput">
-    <label for="heightInput">Height:</label>
-    <input type="number" id="heightInput">
-    <button id="cropBtn">Crop Image</button>
-    <script src="https://docs.opencv.org/4.5.5/opencv.js"></script>
-    <script src="app.js"></script>
+    <h2>Drawer (50x50)</h2>
+    <div id="container">
+        <canvas id="topCanvas" width="500" height="500"></canvas>
+        <canvas id="rightCanvas" width="190" height="500" ></canvas>
+    </div>
+
+    <script>
+        let topCanvas, rightCanvas;
+
+        function initializeCanvases() {
+            topCanvas = new fabric.Canvas('topCanvas');
+            rightCanvas = new fabric.Canvas('rightCanvas');
+            
+            fabric.Image.fromURL('https://i.postimg.cc/FKd48W9k/Untitled-design.jpg', function(img) {
+                img.set({
+                    scaleX: topCanvas.width / img.width,
+                    scaleY: topCanvas.height / img.height
+                });
+                topCanvas.setBackgroundImage(img, topCanvas.renderAll.bind(topCanvas));
+            });
+        }
+function createGradient(canvas, width) {
+    return new fabric.Gradient({
+        type: 'linear',
+        coords: {
+            x1: 0,      // Start at the left edge of the rectangle
+            y1: 0,      // Keep y constant, ensures horizontal gradient
+            x2: width,  // End at the right edge of the rectangle
+            y2: 0       // Same y as y1, horizontal line
+        },
+        colorStops: [
+            { offset: 0, color: 'darkgrey' },  // Dark grey at start
+            { offset: 0.5, color: 'lightgrey' }, // Light grey in the middle
+            { offset: 1, color: 'darkgrey' }  // Dark grey at end
+        ]
+    });
+}
+
+
+
+        function addRectangles() {
+            const rects = [
+                { width: 9, height: 400 },
+                { width: 7, height: 300 },
+                { width: 9, height: 200 },
+                { width: 7, height: 180 },
+                { width: 9, height: 120 },
+                { width: 7, height: 100 }
+            ];
+
+            let currentX = 15;
+            const startY = 15; // Starting Y position at the top of the canvas
+
+            rects.forEach(rect => {
+                const rectangle = new fabric.Rect({
+                    left: currentX + rect.width / 2,
+                    top: startY + rect.height / 2,
+                    width: rect.width,
+                    height: rect.height,
+                 fill: createGradient(rightCanvas, rect.width),  // Make sure width is correctly passed here
+        
+                    angle: 0,
+                    selectable: false,
+                    evented: true,
+                    originX: 'center',
+                    originY: 'center'
+                });
+
+                rightCanvas.add(rectangle);
+                makeClickable(rectangle, rect.height, rect.width);
+                currentX += rect.width + 15;  // Adjust spacing between rectangles
+            });
+        }
+
+        function makeClickable(rect, height, width) {
+            rect.on('mousedown', function() {
+                const newRect = new fabric.Rect({
+                    left: topCanvas.width / 2,
+                    top: topCanvas.height / 2,
+                    width: width,
+                    height: height,
+                 fill: createGradient(rightCanvas, rect.width),  // Make sure width is correctly passed here
+        
+                    hasControls: true,
+                    lockRotation: false,
+                    originX: 'center',
+                    originY: 'center'
+                });
+                newRect.setControlsVisibility({
+                    mt: false,
+                    mb: false,
+                    ml: false,
+                    mr: false,
+                    tl: false,
+                    tr: false,
+                    bl: false,
+                    br: false,
+                    mtr: true
+                });
+                topCanvas.add(newRect);
+                topCanvas.setActiveObject(newRect);
+                topCanvas.renderAll();
+            });
+        }
+
+        function enableTopCanvasInteractions() {
+            topCanvas.on('object:moving', function(e) {
+                e.target.setCoords();
+            });
+            topCanvas.on('object:rotating', function(e) {
+                const angle = e.target.angle;
+                e.target.set('angle', Math.round(angle / 90) * 90);
+            });
+            topCanvas.on('mouse:dblclick', function(e) {
+                if (e.target) {
+                    topCanvas.remove(e.target);
+                }
+            });
+            topCanvas.on('mouse:down', function(e) {
+                if (!e.target) {
+                    topCanvas.discardActiveObject();
+                    topCanvas.renderAll();
+                }
+            });
+        }
+
+function customizeControls() {
+    fabric.Object.prototype.controls.mtr = new fabric.Control({
+        x: 0.5, // Position it halfway across the width of the object; change this as needed to align properly
+        y: 0, // Keep this at 0 to align vertically centered
+        offsetY: 0, // No vertical offset, center vertically
+        offsetX: -4 , // Adjust this value to move the control right outside the object edge
+        cursorStyle: 'pointer',
+        mouseUpHandler: rotateOnClick, // Handler to rotate object on click
+        render: renderRotationControl, // Custom rendering for the control
+        cornerSize: 20 // Size of the control
+    });
+}
+
+
+
+function rotateOnClick(eventData, transform, x, y) {
+    var target = transform.target;
+    var angle = target.angle + 90; // Increment angle by 90 degrees on each click
+    target.rotate(angle % 360); // Ensure the angle stays within 0-359 degrees
+    target.setCoords(); // Update the target's coordinates
+    topCanvas.renderAll(); // Re-render the canvas to reflect changes
+}
+
+function rotateObject(eventData, transform) {
+    var target = transform.target;
+    target.set({
+        angle: Math.round(target.angle / 90) * 90
+    });
+    target.setCoords(); // Update the target's coordinates
+}
+
+function renderRotationControl(ctx, left, top, styleOverride, fabricObject) {
+    var size = this.cornerSize;
+    ctx.fillStyle = '#ff0000'; // Use red color for the control
+    ctx.beginPath();
+    ctx.arc(left, top, size / 2, 0, 2 * Math.PI); // Draw a circle for the rotation control
+    ctx.fill();
+}
+
+
+
+    function initialize() {
+    initializeCanvases();
+    addRectangles();
+    enableTopCanvasInteractions();
+    customizeControls(); // Apply custom controls setup
+}
+
+        window.onload = initialize;
+    </script>
 </body>
 </html>
