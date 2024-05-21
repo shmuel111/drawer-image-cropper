@@ -161,7 +161,7 @@ function customizeControls() {
         x: 0.5, // Position it halfway across the width of the object; change this as needed to align properly
         y: 0, // Keep this at 0 to align vertically centered
         offsetY: 0, // No vertical offset, center vertically
-        offsetX: -4 , // Adjust this value to move the control right outside the object edge
+        offsetX: -19 , // Adjust this value to move the control right outside the object edge
         cursorStyle: 'pointer',
         mouseUpHandler: rotateOnClick, // Handler to rotate object on click
         render: renderRotationControl, // Custom rendering for the control
@@ -198,6 +198,13 @@ function renderRotationControl(ctx, left, top, styleOverride, fabricObject) {
 
 
     function initialize() {
+     // Set global Fabric.js object properties
+    fabric.Object.prototype.objectCaching = false;
+    fabric.Object.prototype.transparentCorners = false;
+    fabric.Object.prototype.cornerColor = 'blue';
+    fabric.Object.prototype.cornerSize = 15;
+    fabric.Object.prototype.padding = 15;  // Adds padd
+    
     initializeCanvases();
     addRectangles();
     enableTopCanvasInteractions();
