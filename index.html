@@ -3,37 +3,27 @@
 <head>
     <title>Fabric.js Canvas Example</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
-    
-    
-       <style>
+    <style>
         #container {
             display: flex;
             align-items: flex-start; /* Aligns canvases at the top */
         }
         canvas {
-            
+           
         }
         #rightCanvas {
             padding-left: 40px;
-          
-            
         }
-          #topCanvas {
+        #topCanvas {
             border: 20px solid grey; /* Adds a grey border with 20px thickness */
-           
         }
     </style>
-    
-    
-    
-   
-  
 </head>
 <body>
     <h2>Drawer (50x50)</h2>
     <div id="container">
         <canvas id="topCanvas" width="500" height="500"></canvas>
-        <canvas id="rightCanvas" width="190" height="500" ></canvas>
+        <canvas id="rightCanvas" width="190" height="500"></canvas>
     </div>
 
     <script>
@@ -51,24 +41,23 @@
                 topCanvas.setBackgroundImage(img, topCanvas.renderAll.bind(topCanvas));
             });
         }
-function createGradient(canvas, width) {
-    return new fabric.Gradient({
-        type: 'linear',
-        coords: {
-            x1: 0,      // Start at the left edge of the rectangle
-            y1: 0,      // Keep y constant, ensures horizontal gradient
-            x2: width,  // End at the right edge of the rectangle
-            y2: 0       // Same y as y1, horizontal line
-        },
-        colorStops: [
-            { offset: 0, color: 'darkgrey' },  // Dark grey at start
-            { offset: 0.5, color: 'lightgrey' }, // Light grey in the middle
-            { offset: 1, color: 'darkgrey' }  // Dark grey at end
-        ]
-    });
-}
 
-
+        function createGradient(canvas, width) {
+            return new fabric.Gradient({
+                type: 'linear',
+                coords: {
+                    x1: 0,
+                    y1: 0,
+                    x2: width,
+                    y2: 0
+                },
+                colorStops: [
+                    { offset: 0, color: 'darkgrey' },
+                    { offset: 0.5, color: 'lightgrey' },
+                    { offset: 1, color: 'darkgrey' }
+                ]
+            });
+        }
 
         function addRectangles() {
             const rects = [
@@ -89,8 +78,7 @@ function createGradient(canvas, width) {
                     top: startY + rect.height / 2,
                     width: rect.width,
                     height: rect.height,
-                 fill: createGradient(rightCanvas, rect.width),  // Make sure width is correctly passed here
-        
+                    fill: createGradient(rightCanvas, rect.width),
                     angle: 0,
                     selectable: false,
                     evented: true,
@@ -111,8 +99,7 @@ function createGradient(canvas, width) {
                     top: topCanvas.height / 2,
                     width: width,
                     height: height,
-                 fill: createGradient(rightCanvas, rect.width),  // Make sure width is correctly passed here
-        
+                    fill: createGradient(rightCanvas, rect.width),
                     hasControls: true,
                     lockRotation: false,
                     originX: 'center',
@@ -156,60 +143,82 @@ function createGradient(canvas, width) {
             });
         }
 
-function customizeControls() {
-    fabric.Object.prototype.controls.mtr = new fabric.Control({
-        x: 0.5, // Position it halfway across the width of the object; change this as needed to align properly
-        y: 0, // Keep this at 0 to align vertically centered
-        offsetY: 0, // No vertical offset, center vertically
-        offsetX: -19 , // Adjust this value to move the control right outside the object edge
-        cursorStyle: 'pointer',
-        mouseUpHandler: rotateOnClick, // Handler to rotate object on click
-        render: renderRotationControl, // Custom rendering for the control
-        cornerSize: 20 // Size of the control
-    });
-}
+        function customizeControls() {
+            fabric.Object.prototype.controls.deleteControl = new fabric.Control({
+                x: 2, // Position it halfway across the width of the object; change this as needed to align properly
+                y: 0, // Position it above the object
+                offsetY: 0, // No vertical offset, center vertically
+                offsetX: 0, // Vertical offset to position it above the object
+                cursorStyle: 'pointer',
+                mouseUpHandler: deleteObject, // Handler to delete the object on click
+                render: renderDeleteControl, // Custom rendering for the control
+                cornerSize: 30 // Size of the control
+            });
 
+            fabric.Object.prototype.controls.mtr = new fabric.Control({
+                x: 0, // Position it halfway across the width of the object; change this as needed to align properly
+                y: 0, // Keep this at 0 to align vertically centered
+                offsetY: 0, // No vertical offset, center vertically
+                offsetX: 0, // Adjust this value to move the control right outside the object edge
+                cursorStyle: 'pointer',
+                mouseUpHandler: rotateOnClick, // Handler to rotate object on click
+                render: renderRotationControl, // Custom rendering for the control
+                cornerSize: 30 // Size of the control
+            });
+        }
 
+        function deleteObject(eventData, transform) {
+            var target = transform.target;
+            topCanvas.remove(target);
+            topCanvas.renderAll();
+        }
 
-function rotateOnClick(eventData, transform, x, y) {
-    var target = transform.target;
-    var angle = target.angle + 90; // Increment angle by 90 degrees on each click
-    target.rotate(angle % 360); // Ensure the angle stays within 0-359 degrees
-    target.setCoords(); // Update the target's coordinates
-    topCanvas.renderAll(); // Re-render the canvas to reflect changes
-}
+        function rotateOnClick(eventData, transform, x, y) {
+            var target = transform.target;
+            var angle = target.angle + 90; // Increment angle by 90 degrees on each click
+            target.rotate(angle % 360); // Ensure the angle stays within 0-359 degrees
+            target.setCoords(); // Update the target's coordinates
+            topCanvas.renderAll(); // Re-render the canvas to reflect changes
+        }
 
-function rotateObject(eventData, transform) {
-    var target = transform.target;
-    target.set({
-        angle: Math.round(target.angle / 90) * 90
-    });
-    target.setCoords(); // Update the target's coordinates
-}
+        function renderRotationControl(ctx, left, top, styleOverride, fabricObject) {
+            var size = this.cornerSize;
+            ctx.strokeStyle = '#ff0000'; // Use red color for the control border
+            ctx.lineWidth = 3; // Set the border width
+            ctx.beginPath();
+            ctx.arc(left, top, size / 2, 0, 2 * Math.PI); // Draw a circle for the rotation control
+            ctx.stroke(); // Use stroke to draw the border instead of fill
+        }
 
-function renderRotationControl(ctx, left, top, styleOverride, fabricObject) {
-    var size = this.cornerSize;
-    ctx.fillStyle = '#ff0000'; // Use red color for the control
-    ctx.beginPath();
-    ctx.arc(left, top, size / 2, 0, 2 * Math.PI); // Draw a circle for the rotation control
-    ctx.fill();
-}
+        function renderDeleteControl(ctx, left, top, styleOverride, fabricObject) {
+            var size = this.cornerSize;
+            ctx.strokeStyle = '#ff0000'; // Use red color for the control border
+            ctx.lineWidth = 2; // Set the border width
+            ctx.beginPath();
+            ctx.arc(left, top, size / 2, 0, 2 * Math.PI); // Draw a circle for the delete control
+            ctx.stroke(); // Use stroke to draw the border instead of fill
+            ctx.beginPath();
+            ctx.moveTo(left - size / 4, top - size / 4);
+            ctx.lineTo(left + size / 4, top + size / 4);
+            ctx.moveTo(left + size / 4, top - size / 4);
+            ctx.lineTo(left - size / 4, top + size / 4);
+            ctx.stroke();
+        }
 
+        function initialize() {
+            // Set global Fabric.js object properties
+            fabric.Object.prototype.objectCaching = false;
+            fabric.Object.prototype.transparentCorners = false;
+            fabric.Object.prototype.cornerColor = 'blue';
+            fabric.Object.prototype.cornerSize = 10;
+            fabric.Object.prototype.padding = 10;  // Adds padding around objects for easier selection
 
-
-    function initialize() {
-     // Set global Fabric.js object properties
-    fabric.Object.prototype.objectCaching = false;
-    fabric.Object.prototype.transparentCorners = false;
-    fabric.Object.prototype.cornerColor = 'blue';
-    fabric.Object.prototype.cornerSize = 15;
-    fabric.Object.prototype.padding = 15;  // Adds padd
-    
-    initializeCanvases();
-    addRectangles();
-    enableTopCanvasInteractions();
-    customizeControls(); // Apply custom controls setup
-}
+            // Initialize canvases and other setup
+            initializeCanvases();
+            addRectangles();
+            enableTopCanvasInteractions();
+            customizeControls(); // Apply custom controls setup
+        }
 
         window.onload = initialize;
     </script>
