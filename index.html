@@ -253,34 +253,36 @@
         
         
         
-        function enableTopCanvasInteractions() {
-    topCanvas.on('object:moving', function(e) {
-        var target = e.target;
-        target.setCoords(); // Update the target's coordinates for accurate comparison
+      function enableTopCanvasInteractions() {
+    topCanvas.on('object:moving', function (e) {
+        const movingObj = e.target;
+        const movingObjMidX = movingObj.left + (movingObj.width * movingObj.scaleX) / 2;
+        const movingObjMidY = movingObj.top + (movingObj.height * movingObj.scaleY) / 2;
+        const movingObjAngle = movingObj.angle % 360;
 
-        // Snapping logic
-        var snapDistance = 15; // Distance within which rectangles will snap to each other
-        var objects = topCanvas.getObjects('rect');
-        for (var i = 0; i < objects.length; i++) {
-            var obj = objects[i];
-            if (obj === target) continue; // Skip self
+        topCanvas.getObjects().forEach(function (obj) {
+            if (obj === movingObj || obj.type !== 'rect') return; // Skip itself and non-rectangle objects
 
-            // Check horizontal snapping (center to center alignment)
-            var targetCenter = target.left + target.width * target.scaleX / 2;
-            var objCenter = obj.left + obj.width * obj.scaleX / 2;
+            const objAngle = obj.angle % 360;
 
-            // Calculate distance between centers
-            var distance = Math.abs(targetCenter - objCenter);
-
-            // If within snapping distance, snap target center to object center
-            if (distance <= snapDistance) {
-                var difference = objCenter - targetCenter; // Calculate the needed adjustment
-                target.left += difference; // Adjust position to snap
-                break; // Stop checking after snapping to the first nearby object
+            // Check if objects have the same orientation
+            if ((movingObjAngle === 0 || movingObjAngle === 180) && (objAngle === 0 || objAngle === 180)) {
+                // Both are horizontal
+                const objMidX = obj.left + (obj.width * obj.scaleX) / 2;
+                if (Math.abs(movingObjMidX - objMidX) <= 15) { // 15 pixel threshold for snapping
+                    movingObj.set({ left: movingObj.left + (objMidX - movingObjMidX) });
+                }
+            } else if ((movingObjAngle === 90 || movingObjAngle === 270) && (objAngle === 90 || objAngle === 270)) {
+                // Both are vertical
+                const objMidY = obj.top + (obj.height * obj.scaleY) / 2;
+                if (Math.abs(movingObjMidY - objMidY) <= 15) { // 15 pixel threshold for snapping
+                    movingObj.set({ top: movingObj.top + (objMidY - movingObjMidY) });
+                }
             }
-        }
+        });
 
-        topCanvas.renderAll(); // Re-render the canvas to show changes
+        movingObj.setCoords(); // Update the object's coordinates after moving
+        topCanvas.renderAll();
     });
 
     topCanvas.on('object:rotating', function(e) {
@@ -308,12 +310,16 @@
         
         
         
-       
-   function enableTopCanvasInteractions() {
+function enableTopCanvasInteractions() {
+    topCanvas.on('object:moving', function (e) {
+        // Remove or comment out the snapping logic here
+        var movingObj = e.target;
+        movingObj.setCoords(); // Still necessary to update the object's coordinates after moving
+    });
 
     topCanvas.on('object:rotating', function(e) {
         const angle = e.target.angle;
-        e.target.set('angle', Math.round(angle / 90) * 90);
+        e.target.set('angle', Math.round(angle / 90) * 90); // Continue to snap to 90 degree increments if needed
     });
 
     topCanvas.on('mouse:dblclick', function(e) {
@@ -330,6 +336,9 @@
         }
     });
 }
+
+
+
 
         
         
