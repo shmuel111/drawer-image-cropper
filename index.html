@@ -143,29 +143,29 @@
             });
         }
 
-        function customizeControls() {
-            fabric.Object.prototype.controls.deleteControl = new fabric.Control({
-                x: 2, // Position it halfway across the width of the object; change this as needed to align properly
-                y: 0, // Position it above the object
-                offsetY: 0, // No vertical offset, center vertically
-                offsetX: 0, // Vertical offset to position it above the object
-                cursorStyle: 'pointer',
-                mouseUpHandler: deleteObject, // Handler to delete the object on click
-                render: renderDeleteControl, // Custom rendering for the control
-                cornerSize: 30 // Size of the control
-            });
+     function customizeControls() {
+    fabric.Object.prototype.controls.deleteControl = new fabric.Control({
+        x: 0, // Position it halfway across the width of the object; change this as needed to align properly
+        y: -0.5, // Position it above the object
+        offsetY: 25, // No vertical offset, center vertically
+        offsetX: 0, // Vertical offset to position it above the object
+        cursorStyle: 'pointer',
+        mouseUpHandler: deleteObject, // Handler to delete the object on click
+        render: renderDeleteControl, // Custom rendering for the control
+        cornerSize: 20 // Size of the control
+    });
 
-            fabric.Object.prototype.controls.mtr = new fabric.Control({
-                x: 0, // Position it halfway across the width of the object; change this as needed to align properly
-                y: 0, // Keep this at 0 to align vertically centered
-                offsetY: 0, // No vertical offset, center vertically
-                offsetX: 0, // Adjust this value to move the control right outside the object edge
-                cursorStyle: 'pointer',
-                mouseUpHandler: rotateOnClick, // Handler to rotate object on click
-                render: renderRotationControl, // Custom rendering for the control
-                cornerSize: 30 // Size of the control
-            });
-        }
+    fabric.Object.prototype.controls.mtr = new fabric.Control({
+        x: 0, // Position it halfway across the width of the object; change this as needed to align properly
+        y: 0.5, // Keep this at 0 to align vertically centered
+        offsetY: -25, // No vertical offset, center vertically
+        offsetX: 0, // Adjust this value to move the control right outside the object edge
+        cursorStyle: 'pointer',
+        mouseUpHandler: rotateOnClick, // Handler to rotate object on click
+        render: renderRotationControl, // Custom rendering for the control
+        cornerSize: 20 // Size of the control
+    });
+}
 
         function deleteObject(eventData, transform) {
             var target = transform.target;
@@ -184,26 +184,32 @@
         function renderRotationControl(ctx, left, top, styleOverride, fabricObject) {
             var size = this.cornerSize;
             ctx.strokeStyle = '#ff0000'; // Use red color for the control border
-            ctx.lineWidth = 3; // Set the border width
+            ctx.lineWidth = 2; // Set the border width
             ctx.beginPath();
             ctx.arc(left, top, size / 2, 0, 2 * Math.PI); // Draw a circle for the rotation control
             ctx.stroke(); // Use stroke to draw the border instead of fill
         }
 
-        function renderDeleteControl(ctx, left, top, styleOverride, fabricObject) {
-            var size = this.cornerSize;
-            ctx.strokeStyle = '#ff0000'; // Use red color for the control border
-            ctx.lineWidth = 2; // Set the border width
-            ctx.beginPath();
-            ctx.arc(left, top, size / 2, 0, 2 * Math.PI); // Draw a circle for the delete control
-            ctx.stroke(); // Use stroke to draw the border instead of fill
-            ctx.beginPath();
-            ctx.moveTo(left - size / 4, top - size / 4);
-            ctx.lineTo(left + size / 4, top + size / 4);
-            ctx.moveTo(left + size / 4, top - size / 4);
-            ctx.lineTo(left - size / 4, top + size / 4);
-            ctx.stroke();
-        }
+
+function renderDeleteControl(ctx, left, top, styleOverride, fabricObject) {
+    var size = this.cornerSize;
+    ctx.strokeStyle = '#ff0000'; // Use red color for the control border
+    ctx.lineWidth = 2; // Set the border width
+    ctx.beginPath();
+    ctx.arc(left, top, size / 2, 0, 2 * Math.PI); // Draw a circle for the delete control
+    ctx.stroke(); // Use stroke to draw the border instead of fill    
+    ctx.fillStyle = 'rgba(255, 0, 0, 0.1)'; // Use a light red fill with transparency for hit area
+    ctx.fill(); // Fill the circle to ensure the hit area is covered
+    ctx.beginPath();
+    ctx.moveTo(left - size / 4, top - size / 4);
+    ctx.lineTo(left + size / 4, top + size / 4);
+    ctx.moveTo(left + size / 4, top - size / 4);
+    ctx.lineTo(left - size / 4, top + size / 4);
+    ctx.stroke();
+}
+
+
+  
 
         function initialize() {
             // Set global Fabric.js object properties
